@@ -97,7 +97,7 @@ Layer:
       <<: *osm2pgsql
       table: |-
         (SELECT
-            way, name, way_pixels, religion,
+            way, COALESCE(tags->'name:cy',name) "name", way_pixels, religion,
             COALESCE(wetland, landuse, "natural") AS feature
           FROM (SELECT
               way, COALESCE(name, '') AS name, religion,
@@ -126,7 +126,7 @@ Layer:
             way, name, religion, way_pixels,
             COALESCE(aeroway, amenity, wetland, power, landuse, leisure, military, "natural", tourism, highway, railway) AS feature
           FROM (SELECT
-              way, COALESCE(name, '') AS name,
+              way, COALESCE(COALESCE(tags->'name:cy',name), '') AS name,
               ('aeroway_' || (CASE WHEN aeroway IN ('apron', 'aerodrome') THEN aeroway ELSE NULL END)) AS aeroway,
               ('amenity_' || (CASE WHEN amenity IN ('parking', 'bicycle_parking', 'motorcycle_parking', 'university', 'college', 'school', 
                                                     'hospital', 'kindergarten', 'grave_yard', 'prison', 'place_of_worship', 'clinic') 
@@ -227,7 +227,7 @@ Layer:
             "natural",
             waterway,
             landuse,
-            name,
+            COALESCE(tags->'name:cy',name) "name",
             way_area/NULLIF(!pixel_width!::real*!pixel_height!::real,0) AS way_pixels
           FROM planet_osm_polygon
           WHERE
@@ -302,7 +302,7 @@ Layer:
         (SELECT
             way,
             waterway,
-            name
+            COALESCE(tags->'name:cy',name) "name"
           FROM planet_osm_line
           WHERE waterway IN ('dam', 'weir', 'lock_gate')
         ) AS water_barriers_line
@@ -1077,7 +1077,7 @@ Layer:
         (SELECT
             way,
             waterway,
-            name,
+            COALESCE(tags->'name:cy',name) "name",
             tags->'intermittent' as intermittent,
             CASE WHEN tunnel IN ('yes', 'culvert') THEN 'yes' ELSE 'no' END AS int_tunnel,
             'yes' AS bridge
@@ -1321,7 +1321,7 @@ Layer:
       table: |-
         (SELECT
             way,
-            name,
+            COALESCE(tags->'name:cy',name) "name",
             boundary,
             way_area/NULLIF(!pixel_width!::real*!pixel_height!::real,0) AS way_pixels
           FROM planet_osm_polygon
@@ -1340,7 +1340,7 @@ Layer:
         (SELECT
             way,
             way_area/NULLIF(!pixel_width!::real*!pixel_height!::real,0) AS way_pixels,
-            name,
+            COALESCE(tags->'name:cy',name) "name",
             tourism
           FROM planet_osm_polygon
           WHERE tourism = 'theme_park'
@@ -1376,7 +1376,7 @@ Layer:
         (SELECT
             way,
             way_area/NULLIF(!pixel_width!::real*!pixel_height!::real,0) AS way_pixels,
-            name
+            COALESCE(tags->'name:cy',name) "name"
           FROM planet_osm_polygon
           WHERE boundary = 'administrative'
             AND admin_level = '2'
@@ -1394,7 +1394,7 @@ Layer:
       table: |-
         (SELECT
             way,
-            name,
+            COALESCE(tags->'name:cy',name) "name",
             CASE
               WHEN (tags->'population' ~ '^[0-9]{1,8}$') THEN (tags->'population')::INTEGER ELSE 0
             END as population,
@@ -1418,7 +1418,7 @@ Layer:
         (SELECT
             way,
             way_area/NULLIF(!pixel_width!::real*!pixel_height!::real,0) AS way_pixels,
-            name,
+            COALESCE(tags->'name:cy',name) "name",
             ref
           FROM planet_osm_polygon
           WHERE boundary = 'administrative'
@@ -1449,7 +1449,7 @@ Layer:
                 osm_id,
                 way,
                 place,
-                name,
+                COALESCE(tags->'name:cy',name) "name",
                 (
                   (CASE
                     WHEN (tags->'population' ~ '^[0-9]{1,8}$') THEN (tags->'population')::INTEGER
@@ -1482,7 +1482,7 @@ Layer:
         (SELECT
             way,
             place,
-            name
+            COALESCE(tags->'name:cy',name) "name"
           FROM planet_osm_point
           WHERE place IN ('village', 'hamlet')
              AND name IS NOT NULL
@@ -1536,7 +1536,7 @@ Layer:
       table: |-
         (SELECT
             way,
-            name,
+            COALESCE(tags->'name:cy',name) "name",
             ref,
             railway,
             aerialway
@@ -1875,7 +1875,7 @@ Layer:
             way,
             way_area/NULLIF(!pixel_width!::real*!pixel_height!::real,0) AS way_pixels,
             highway,
-            name
+            COALESCE(tags->'name:cy',name) "name"
           FROM planet_osm_polygon
           WHERE highway IN ('residential', 'unclassified', 'pedestrian', 'service', 'footway', 'cycleway', 'living_street', 'track', 'path', 'platform')
             OR railway IN ('platform')
@@ -1896,7 +1896,7 @@ Layer:
             CASE WHEN substr(highway, length(highway)-3, 4) = 'link' THEN substr(highway, 0, length(highway)-4) ELSE highway END,
             CASE WHEN (tunnel = 'yes' OR tunnel = 'building_passage' OR covered = 'yes') THEN 'yes' ELSE 'no' END AS tunnel,
             construction,
-            name,
+            COALESCE(tags->'name:cy',name) "name",
             CASE
               WHEN oneway IN ('yes', '-1') THEN oneway
               WHEN junction IN ('roundabout') AND (oneway IS NULL OR NOT oneway IN ('no', 'reversible')) THEN 'yes'
@@ -1948,7 +1948,7 @@ Layer:
         (SELECT
             way,
             highway,
-            name
+            COALESCE(tags->'name:cy',name) "name"
           FROM planet_osm_line
           WHERE highway IN ('bridleway', 'footway', 'cycleway', 'path', 'track', 'steps')
             AND name IS NOT NULL
@@ -1972,7 +1972,7 @@ Layer:
               'boundary_' || CASE WHEN boundary IN ('national_park') THEN boundary ELSE NULL END,
               'leisure_' || CASE WHEN leisure IN ('nature_reserve') THEN leisure ELSE NULL END
             ) AS feature,
-            name,
+            COALESCE(tags->'name:cy',name) "name",
             CASE WHEN building = 'no' OR building IS NULL THEN 'no' ELSE 'yes' END AS is_building -- always no with the where conditions
           FROM planet_osm_polygon
           WHERE (landuse IN ('forest', 'military', 'farmland')
@@ -2040,7 +2040,7 @@ Layer:
               'tourism_' || CASE WHEN tourism IN ('viewpoint', 'attraction') THEN tourism ELSE NULL END
             ) AS feature,
             access,
-            name,
+            COALESCE(tags->'name:cy',name) "name",
             tags->'operator' as operator,
             tags->'icao' as icao,
             tags->'iata' as iata,
@@ -2083,7 +2083,7 @@ Layer:
             NULL as way_pixels,
             COALESCE('man_made_' || man_made, 'waterway_' || waterway, 'natural_' || "natural") AS feature,
             access,
-            name,
+            COALESCE(tags->'name:cy',name) "name",
             tags->'operator' as operator,
             ref,
             NULL AS way_area,
@@ -2172,7 +2172,7 @@ Layer:
                   'historic_' || CASE WHEN historic IN ('wayside_cross') THEN historic ELSE NULL END
                 ) AS feature,
                 access,
-                name,
+                COALESCE(tags->'name:cy',name) "name",
                 CASE
                   WHEN "natural" IN ('peak', 'volcano', 'saddle') OR tourism = 'alpine_hut' OR amenity = 'shelter' THEN
                     CASE
@@ -2224,7 +2224,7 @@ Layer:
       <<: *osm2pgsql
       table: |-
         (SELECT
-            name,
+            COALESCE(tags->'name:cy',name) "name",
             way,
             way_area/NULLIF(!pixel_width!::real*!pixel_height!::real,0) AS way_pixels
           FROM planet_osm_polygon
@@ -2284,7 +2284,7 @@ Layer:
             way,
             waterway,
             lock,
-            name,
+            COALESCE(tags->'name:cy',name) "name",
             tags->'intermittent' as intermittent,
             CASE WHEN tunnel IN ('yes', 'culvert') THEN 'yes' ELSE 'no' END AS int_tunnel
           FROM planet_osm_line
@@ -2318,7 +2318,7 @@ Layer:
       table: |-
         (SELECT
             way,
-            name,
+            COALESCE(tags->'name:cy',name) "name",
             admin_level
           FROM planet_osm_polygon
           WHERE boundary = 'administrative'
@@ -2336,7 +2336,7 @@ Layer:
       table: |-
         (SELECT
             way,
-            name,
+            COALESCE(tags->'name:cy',name) "name",
             way_area/NULLIF(!pixel_width!::real*!pixel_height!::real,0) AS way_pixels
           FROM planet_osm_polygon
           WHERE (boundary = 'national_park' OR leisure = 'nature_reserve')
